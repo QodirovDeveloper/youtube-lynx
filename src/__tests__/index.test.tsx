@@ -6,9 +6,10 @@ import { App } from '../App';
 import * as L from '../lib/library';
 import * as P from '../lib/player';
 
-test("App: video tanlanmaganda maslahat ko'rinadi", async () => {
-  const { findByText } = render(<App />);
-  expect(await findByText('Video tanlang')).toBeInTheDocument();
+test("App: video tanlanmaganda pastki panel yo'q, yuqori panel bor", async () => {
+  const { findByText, queryByText } = render(<App />);
+  expect(await findByText('☰')).toBeInTheDocument();
+  expect(queryByText('−10')).toBeNull();
 });
 
 describe('player', () => {

@@ -29,14 +29,8 @@ export function PlayerBar(props: {
 }) {
   const { st } = props;
 
-  if (!st.videoId) {
-    return (
-      <view className="bar bar--empty">
-        <text className="hint-title">Video tanlang</text>
-        <text className="hint">Ekran o'chsa yoki boshqa ilovaga o'tsangiz ham ovoz davom etadi</text>
-      </view>
-    );
-  }
+  // video tanlanmaguncha panel ko'rinmaydi — butun joy YouTube'ga
+  if (!st.videoId) return null;
 
   const pct = st.duration > 0 ? Math.min(100, (st.position / st.duration) * 100) : 0;
   const time = st.duration > 0 ? `${fmtTime(st.position)} / ${fmtTime(st.duration)}` : fmtTime(st.position);

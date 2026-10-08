@@ -107,10 +107,15 @@
 
   var lastKey = '';
   var lastAt = 0;
+  // iOS: ilova fonga o'tganda tizim videoni o'zi pauza qiladi — 'resume' buyrug'i uchun kerak
+  var lastPlayingAt = 0;
+  var userPausedAt = 0;
+  var touchedAt = 0;
   function send(force) {
     var s = info();
     var key = s.id + '|' + s.title + '|' + s.channel + '|' + s.playing + '|' + Math.round(s.dur);
     var now = Date.now();
+    if (s.playing) lastPlayingAt = now;
     // o'zgarishda darhol; ijro paytida esa soniyada bir marta (progress chizig'i uchun)
     if (!force && key === lastKey && !(s.playing && now - lastAt >= 900)) return;
     lastKey = key;
@@ -126,6 +131,14 @@
     });
   window.addEventListener('yt-navigate-finish', function () { setTimeout(function () { send(true); }, 500); });
   setInterval(function () { send(false); }, 1000);
+
+  // Pauzani foydalanuvchi o'zi bosdimi (sahifadagi tugma) yoki tizim qildimi — ajratish uchun
+  ['touchstart', 'pointerdown', 'keydown'].forEach(function (type) {
+    document.addEventListener(type, function () { touchedAt = Date.now(); }, true);
+  });
+  document.addEventListener('pause', function () {
+    if (Date.now() - touchedAt < 1500) userPausedAt = Date.now();
+  }, true);
 
   // Ilova ichidan ochilgan video sahifasi (tarix, saqlanganlar) o'zi boshlanmasa — bir marta boshlaymiz
   var autoplayUntil = Date.now() + 15000;
@@ -212,8 +225,23 @@
     var v = video();
     switch (action) {
       case 'play': if (v) play(v); break;
-      case 'pause': if (v) v.pause(); break;
-      case 'toggle': if (v) { if (v.paused || v.ended) play(v); else v.pause(); } break;
+      case 'pause': userPausedAt = Date.now(); if (v) v.pause(); break;
+      case 'toggle':
+        if (!v) break;
+        if (v.paused || v.ended) {
+          play(v);
+        } else {
+          userPausedAt = Date.now();
+          v.pause();
+        }
+        break;
+      // iOS: fonga o'tgandan keyin. Video hozirgina o'ynayotgan bo'lsa va pauzani
+      // foydalanuvchi bosmagan bo'lsa — davom ettiramiz.
+      case 'resume':
+        if (v && v.paused && !v.ended && Date.now() - lastPlayingAt < 6000 && userPausedAt < lastPlayingAt) {
+          play(v);
+        }
+        break;
       case 'next': next(); break;
       case 'prev': prev(); break;
       case 'seek': if (v) v.currentTime = Math.max(0, value); break;

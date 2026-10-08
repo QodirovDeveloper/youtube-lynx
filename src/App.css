@@ -113,12 +113,6 @@
   padding-bottom: 10px;
   background-color: var(--surface);
 }
-.bar--empty {
-  gap: 4px;
-  padding: 14px 16px;
-}
-.hint-title { font-size: 15px; font-weight: 600; color: var(--fg); }
-.hint { font-size: 13px; line-height: 18px; color: var(--muted); }
 .progress {
   height: 3px;
   background-color: var(--surface2);
