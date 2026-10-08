@@ -9,6 +9,11 @@ declare module '@lynx-js/types' {
      */
   }
 
+  // xelement-input'da bor, lekin @lynx-js/types'da yozilmagan
+  interface InputProps {
+    'placeholder-color'?: string;
+  }
+
   // O'zimizning native element: android/.../YtWebViewUI.java
   interface IntrinsicElements {
     'yt-webview': StandardProps & {

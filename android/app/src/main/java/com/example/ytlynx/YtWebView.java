@@ -76,14 +76,9 @@ public class YtWebView extends WebView {
             setRendererPriorityPolicy(RENDERER_PRIORITY_IMPORTANT, false);
         }
 
-        // JS → Java: YtNative.postMessage(json)
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
-            WebViewCompat.addWebMessageListener(this, "YtNative", ORIGINS,
-                    (view, message, sourceOrigin, isMainFrame, replyProxy) -> {
-                        String data = message.getData();
-                        if (isMainFrame && data != null) post(() -> Player.get().onPage(data));
-                    });
-        } else {
+        // JS → Java: YtNative.postMessage(json).
+        // Yangi WebView'da xavfsiz usul (faqat YouTube ko'radi), ishlamasa — eski usul.
+        if (!addMessageListener()) {
             addJavascriptInterface(new Object() {
                 @JavascriptInterface
                 public void postMessage(String data) {
@@ -93,10 +88,7 @@ public class YtWebView extends WebView {
         }
 
         bridgeJs = readAsset(context, BRIDGE);
-        documentStart = WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT);
-        if (documentStart) {
-            WebViewCompat.addDocumentStartJavaScript(this, bridgeJs, ORIGINS);
-        }
+        documentStart = addStartScript(bridgeJs);
 
         setWebViewClient(new WebViewClient() {
             @Override
@@ -137,6 +129,32 @@ public class YtWebView extends WebView {
                 exitFullscreen();
             }
         });
+    }
+
+    private boolean addMessageListener() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) return false;
+        try {
+            WebViewCompat.addWebMessageListener(this, "YtNative", ORIGINS,
+                    (view, message, sourceOrigin, isMainFrame, replyProxy) -> {
+                        String data = message.getData();
+                        if (isMainFrame && data != null) post(() -> Player.get().onPage(data));
+                    });
+            return true;
+        } catch (RuntimeException e) {
+            Log.w(MainActivity.TAG, "addWebMessageListener ishlamadi", e);
+            return false;
+        }
+    }
+
+    private boolean addStartScript(String js) {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return false;
+        try {
+            WebViewCompat.addDocumentStartJavaScript(this, js, ORIGINS);
+            return true;
+        } catch (RuntimeException e) {
+            Log.w(MainActivity.TAG, "addDocumentStartJavaScript ishlamadi", e);
+            return false;
+        }
     }
 
     // Asosiy hiyla. Ekran o'chsa yoki boshqa ilovaga o'tilsa, Android bu yerga INVISIBLE/GONE yuboradi,

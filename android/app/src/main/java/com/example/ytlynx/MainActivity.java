@@ -3,6 +3,8 @@ package com.example.ytlynx;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -15,9 +17,12 @@ import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.lynx.tasm.LynxError;
 import com.lynx.tasm.LynxView;
@@ -42,6 +47,7 @@ public class MainActivity extends Activity {
 
     private LynxView mLynxView;
     private TextView mErrorView;
+    private View mErrorPanel;
     private final Runnable mExit = this::finishAndRemoveTask;
 
     @Override
@@ -54,16 +60,36 @@ public class MainActivity extends Activity {
         root.setBackgroundColor(Color.rgb(15, 15, 18));
         setContentView(root);
 
-        // Faqat jiddiy xato bo'lganda ko'rinadi (qora ekran o'rniga sababini ko'rsatadi)
+        // Faqat jiddiy xato bo'lganda ko'rinadi: sababini ko'rsatadi, nusxa olish va yopish mumkin
         mErrorView = new TextView(this);
         mErrorView.setTextColor(Color.RED);
         mErrorView.setTextSize(12);
-        mErrorView.setPadding(32, 96, 32, 32);
+        mErrorView.setPadding(32, 16, 32, 32);
         mErrorView.setTextIsSelectable(true);
-        ScrollView errorScroll = new ScrollView(this);
-        errorScroll.setBackgroundColor(Color.WHITE);
-        errorScroll.addView(mErrorView);
-        errorScroll.setVisibility(View.GONE);
+        ScrollView errorText = new ScrollView(this);
+        errorText.addView(mErrorView);
+        Button copy = new Button(this);
+        copy.setText("Nusxa olish");
+        copy.setOnClickListener(v -> {
+            ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+            clipboard.setPrimaryClip(ClipData.newPlainText("YT Lynx xato", mErrorView.getText()));
+            Toast.makeText(this, "Nusxa olindi", Toast.LENGTH_SHORT).show();
+        });
+        Button close = new Button(this);
+        close.setText("Yopish");
+        LinearLayout buttons = new LinearLayout(this);
+        buttons.setPadding(24, 72, 24, 0);
+        buttons.addView(copy);
+        buttons.addView(close);
+        LinearLayout errorPanel = new LinearLayout(this);
+        errorPanel.setOrientation(LinearLayout.VERTICAL);
+        errorPanel.setBackgroundColor(Color.WHITE);
+        errorPanel.addView(buttons);
+        errorPanel.addView(errorText, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+        errorPanel.setVisibility(View.GONE);
+        close.setOnClickListener(v -> errorPanel.setVisibility(View.GONE));
+        mErrorPanel = errorPanel;
 
         if (MainApplication.initError != null) {
             showError("Lynx ishga tushmadi:\n" + MainApplication.initError);
@@ -110,7 +136,7 @@ public class MainActivity extends Activity {
             showError(Log.getStackTraceString(t));
         }
 
-        root.addView(errorScroll, matchParent());
+        root.addView(mErrorPanel, matchParent());
         Player.get().setExitHandler(mExit);
         openLink(getIntent());
         askPermissions();
@@ -211,7 +237,7 @@ public class MainActivity extends Activity {
         runOnUiThread(() -> {
             CharSequence old = mErrorView.getText();
             mErrorView.setText(old.length() == 0 ? text : old + "\n\n" + text);
-            ((View) mErrorView.getParent()).setVisibility(View.VISIBLE);
+            mErrorPanel.setVisibility(View.VISIBLE);
         });
     }
 

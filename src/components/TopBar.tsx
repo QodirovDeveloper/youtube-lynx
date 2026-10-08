@@ -32,6 +32,7 @@ export function TopBar(props: {
           ref={inputRef}
           className="search-input"
           placeholder="Qidirish yoki havola"
+          placeholder-color="#8c8c99"
           confirm-type="search"
           bindconfirm={(e) => submit(e.detail.value)}
         />
