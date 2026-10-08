@@ -23,3 +23,15 @@ android/build
 android/app/build
 android/local.properties
 android/app/src/main/assets/main.lynx.bundle
+
+# iOS (CI'da yasaladi: xcodegen generate, pod install)
+ios/Pods
+ios/Podfile.lock
+ios/*.xcodeproj
+ios/*.xcworkspace
+ios/Info.plist
+ios/build
+ios/build-sim
+ios/YtLynx/Resources/main.lynxbundle
+*.ipa
+Payload/

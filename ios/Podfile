@@ -1,0 +1,41 @@
+# Lynx o'z pod'larini lynx-family/Specs'da chiqaradi; PrimJS va boshqalar CocoaPods CDN'dan
+source 'https://cdn.cocoapods.org/'
+source 'https://github.com/lynx-family/Specs.git'
+
+platform :ios, '15.0'
+project 'YtLynx.xcodeproj'
+
+target 'YtLynx' do
+  use_frameworks! :linkage => :static
+
+  # Android'dagi org.lynxsdk.lynx:* 4.1.0 bilan bir xil versiya
+  pod 'Lynx', '4.1.0', :subspecs => ['Framework']
+  pod 'PrimJS', '4.1.1', :subspecs => ['quickjs', 'napi']
+
+  # <image> (video muqovalari) va log
+  pod 'LynxService', '4.1.0', :subspecs => ['Image', 'Log', 'Http']
+  pod 'SDWebImage', '5.15.5'
+  pod 'SDWebImageWebPCoder', '0.11.0'
+
+  # <input> (qidiruv qatori). Butun XElement emas — faqat Input (ViewController'da ro'yxatdan o'tadi)
+  pod 'XElement', '4.1.0', :subspecs => ['Input']
+end
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      # pod'lar iOS 10 ni ko'rsatadi, yangi Xcode esa 12 dan pastini qo'llamaydi
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      # Lynx hujjati: yangi Xcode'da ogohlantirishlar xato bo'lib qolmasin
+      config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+      disable = ['-Wno-error', '-Wno-c99-designator',
+                 '-Wno-deprecated-declarations', '-Wno-deprecated-implementations']
+      ['OTHER_CPLUSPLUSFLAGS', 'OTHER_CFLAGS'].each do |key|
+        flags = config.build_settings[key] || ['$(inherited)']
+        flags = [flags] unless flags.is_a?(Array)
+        config.build_settings[key] = flags + disable
+      end
+    end
+  end
+end

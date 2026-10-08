@@ -15,7 +15,7 @@ Faqat o'zim uchun — Play Market'ga chiqarilmaydi.
 - **Ulashish**: boshqa ilovada YouTube havolasini "Ulashish → YT Lynx" — shu yerda ochiladi.
 - Telefonning "orqaga" tugmasi ilovani yopmaydi — fonga o'tkazadi, ovoz davom etadi.
 
-## O'rnatish
+## O'rnatish (Android)
 
 Har `push`'da GitHub Actions APK'ni yig'adi va **Releases → latest** ga `yt-lynx.apk` qilib qo'yadi
 (yonida emulyatordagi skrinshot va diagnostika).
@@ -89,8 +89,33 @@ npm run dev       # brauzerda: /__web_preview?casename=main.web.bundle
 
 Brauzer preview'da faqat Lynx UI ko'rinadi (YouTube oynasi va pleyer — faqat Android'da).
 
-## iOS (keyinroq)
+## iOS
 
-Mac kerak (Xcode). Lynx UI (`src/`) o'zgarmaydi; `WKWebView` + `AVAudioSession` (background audio)
-+ `MPRemoteCommandCenter` (ekran qulfi) bilan iOS qobig'i yoziladi va AltStore/SideStore orqali
-o'rnatiladi.
+Lynx UI (`src/`) va `yt-bridge.js` Android bilan umumiy; iOS qobig'i `ios/` papkasida (Objective-C):
+`YtWebViewUI` (WKWebView), `Player` (ekran qulfi — `MPRemoteCommandCenter`, fonda audio —
+`AVAudioSession`), `PlayerModule`, `StorageModule`.
+
+Mac shart emas: GitHub Actions (macOS) har `push`'da imzosiz `yt-lynx.ipa` yig'adi va
+**Releases → ios-latest** ga qo'yadi.
+
+### iPhone'ga o'rnatish (Windows'dan)
+
+1. Kompyuterga [Sideloadly](https://sideloadly.io) va Apple'ning iTunes'ini (Microsoft Store emas,
+   apple.com versiyasi) o'rnating.
+2. iPhone'ni kabel bilan ulang, Sideloadly'da `yt-lynx.ipa` ni tanlang, Apple ID kiriting → **Start**.
+3. iPhone'da: Sozlamalar → Umumiy → VPN va qurilma boshqaruvi → Apple ID'ingizga **ishonish**.
+   iOS 16+: Sozlamalar → Maxfiylik va xavfsizlik → **Developer Mode** yoqilsin.
+4. Bepul Apple ID bilan ilova **7 kun** ishlaydi — keyin Sideloadly'da qayta "Start" bosiladi.
+
+### Ulashish (iOS)
+
+iOS'da boshqa ilovadan to'g'ridan-to'g'ri ulashish yo'q; o'rniga "Qisqa buyruqlar" (Shortcuts):
+yangi buyruq → "Ulashish varag'ida ko'rsatish" → amal **URL'ni ochish**:
+`ytlynx://open?url=[Qisqa buyruq kiritmasi]`.
+
+### iOS'da sinash
+
+- [ ] Video qo'yib ekranni qulflang — ovoz davom etadimi (iOS videoni pauza qilsa, ilova uni
+      o'zi davom ettiradi).
+- [ ] Ekran qulfida ⏯ ⏭ ⏮ va nom/muqova.
+- [ ] Qo'ng'iroqdan keyin davom etadi.

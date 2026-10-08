@@ -1,0 +1,114 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - 'ios/**'
+      - 'src/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'lynx.config.ts'
+      - 'android/app/src/main/assets/yt-bridge.js'
+      - '.github/workflows/build-ios.yml'
+      - '.github/scripts/ios-sim-test.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Lynx bundle yig'ish
+        run: |
+          npm ci
+          APK_BUILD=1 npm run build
+          mkdir -p ios/YtLynx/Resources diag
+          cp dist/main.lynx.bundle ios/YtLynx/Resources/main.lynxbundle
+
+      - name: Xcode loyihasi va CocoaPods
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild -version
+          brew install xcodegen
+          xcodegen generate
+          pod install --repo-update 2>&1 | tee ../diag/pods.txt
+
+      - name: iPhone uchun yig'ish (imzosiz)
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace YtLynx.xcworkspace -scheme YtLynx -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build 2>&1 | tee ../diag/xcode-device.txt | grep -E 'error:|warning: .*YtLynx/|BUILD (SUCCEEDED|FAILED)' || true
+          test -d build/Build/Products/Release-iphoneos/YtLynx.app
+
+      - name: IPA tayyorlash
+        run: |
+          mkdir -p Payload
+          cp -R ios/build/Build/Products/Release-iphoneos/YtLynx.app Payload/
+          zip -qry yt-lynx.ipa Payload
+          ls -la yt-lynx.ipa
+          unzip -l yt-lynx.ipa | grep -E 'main.lynxbundle|yt-bridge.js|YtLynx$' | tee diag/ipa-contents.txt
+          grep -q main.lynxbundle diag/ipa-contents.txt && grep -q yt-bridge.js diag/ipa-contents.txt
+
+      - name: Simulatorda sinash
+        continue-on-error: true
+        timeout-minutes: 40
+        run: bash .github/scripts/ios-sim-test.sh
+
+      - name: Diagnostika hisobotini tayyorlash
+        if: always()
+        run: |
+          mkdir -p diag
+          {
+            echo "Commit: ${{ github.sha }}"
+            echo
+            if grep -q 'BUILD FAILED\|error:' diag/xcode-device.txt 2>/dev/null; then
+              echo '### Xcode xatolari'
+              echo '```'
+              grep -nE -B2 -A3 'error:' diag/xcode-device.txt | head -150 | cut -c1-400
+              echo '```'
+            fi
+            if grep -q '\[!\]' diag/pods.txt 2>/dev/null; then
+              echo '### CocoaPods'
+              echo '```'; grep -A5 '\[!\]' diag/pods.txt | head -40; echo '```'
+            fi
+            echo '### IPA ichida'
+            echo '```'; cat diag/ipa-contents.txt 2>/dev/null; echo '```'
+            echo '### Simulator'
+            echo '```'; cat diag/sim.txt 2>/dev/null; echo '```'
+            echo '### Ilova loglari (YtLynx)'
+            echo '```'; grep -E 'YtLynx|Lynx|error|Error' diag/ios-log.txt 2>/dev/null | tail -120 | cut -c1-400; echo '```'
+          } > diag/notes.md
+          head -c 120000 diag/notes.md > diag/notes-trimmed.md
+          wc -c diag/notes.md
+
+      - name: ios-latest release ga joylash
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f yt-lynx.ipa ]; then
+            # Build yiqildi: eski IPA'ga tegmaymiz, xatoni alohida release'ga yozamiz
+            gh release delete ios-build-xato --yes --cleanup-tag || true
+            gh release create ios-build-xato --prerelease --title "iOS build xatosi" --notes-file diag/notes-trimmed.md
+            exit 1
+          fi
+          gh release delete ios-build-xato --yes --cleanup-tag || true
+          FILES="yt-lynx.ipa"
+          [ -s diag/ios-screen.png ] && cp diag/ios-screen.png ios-screen.png && FILES="$FILES ios-screen.png"
+          gh release delete ios-latest --yes --cleanup-tag || true
+          gh release create ios-latest $FILES --title "Oxirgi iOS (IPA)" --notes-file diag/notes-trimmed.md
