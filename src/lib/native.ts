@@ -9,6 +9,11 @@ function modules() {
   return typeof NativeModules === 'undefined' ? undefined : NativeModules;
 }
 
+// false: Lynx Go yoki brauzer preview — <yt-webview> va pleyer faqat bizning APK'da bor
+export function hasPlayer() {
+  return !!modules()?.PlayerModule;
+}
+
 export function loadLibrary(cb: (raw: string | null) => void) {
   const storage = modules()?.StorageModule;
   if (!storage) {

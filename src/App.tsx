@@ -7,7 +7,7 @@ import { PlayerBar } from './components/PlayerBar.js';
 import { TopBar } from './components/TopBar.js';
 import type { Item, Library } from './lib/library.js';
 import { addHistory, clearHistory, isFav, parse, removeItem, toggleFav } from './lib/library.js';
-import { command, loadLibrary, openUrl, saveLibrary } from './lib/native.js';
+import { command, hasPlayer, loadLibrary, openUrl, saveLibrary } from './lib/native.js';
 import type { PlayerState } from './lib/player.js';
 import { EMPTY, HOME_URL, nextSleep, readState, toUrl, watchUrl } from './lib/player.js';
 
@@ -18,11 +18,13 @@ export function App() {
   const [lib, setLib] = useState<Library | null>(null); // null — hali yuklanmagan
   const [panel, setPanel] = useState<Tab | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [native, setNative] = useState(true);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Saqlangan kutubxona (Android: SharedPreferences)
   useEffect(() => {
     loadLibrary((raw) => setLib(parse(raw)));
+    setNative(hasPlayer());
   }, []);
 
   const apply = (next: Library) => {
@@ -90,6 +92,15 @@ export function App() {
           bindstate={(e) => setSt(readState(e.detail))}
           bindback={() => setPanel(null)}
         />
+        {native ? null : (
+          <view className="nonative">
+            <text className="nonative-title">YouTube faqat YT Lynx APK'da ochiladi</text>
+            <text className="nonative-text">
+              Lynx Go va brauzerda faqat interfeys ko'rinadi. YouTube oynasi va fonda ijro uchun
+              GitHub → Releases → latest → yt-lynx.apk ni o'rnating.
+            </text>
+          </view>
+        )}
         {panel && lib ? (
           <LibraryPanel
             lib={lib}
