@@ -1,0 +1,25 @@
+# Local
+.DS_Store
+*.local
+*.log*
+diag/
+
+# Dist
+node_modules
+dist/
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# TypeScript
+*.tsbuildinfo
+
+# Android
+*.apk
+android/.gradle
+android/build
+android/app/build
+android/local.properties
+android/app/src/main/assets/main.lynx.bundle

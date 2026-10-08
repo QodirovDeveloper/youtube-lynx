@@ -1,0 +1,311 @@
+/* YT Lynx: tepada qidiruv, o'rtada YouTube (WebView), pastda pleyer paneli.
+   Lynx'da matn rangi meros olinmaydi, shuning uchun har <text> o'z klassiga ega. */
+:root {
+  --bg: #0f0f12;
+  --surface: #18181d;
+  --surface2: #26262d;
+  --fg: #f2f2f5;
+  --muted: #9a9aa6;
+  --accent: #ff4040;
+  --accent-soft: #3a1c1f;
+  background-color: #0f0f12;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--bg);
+}
+
+/* Tepadagi panel */
+.top {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background-color: var(--surface);
+}
+.tb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background-color: var(--surface2);
+}
+.tb--off { opacity: 0.35; }
+.tb--on { background-color: var(--accent-soft); }
+.tb-text { font-size: 20px; color: var(--fg); }
+.tb-text--back { font-size: 30px; line-height: 34px; margin-top: -4px; }
+.tb-text--on { color: var(--accent); }
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 30px;
+  border-radius: 9px;
+  background-color: var(--accent);
+}
+.search {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 20px;
+  background-color: var(--surface2);
+}
+.search-input {
+  flex: 1;
+  height: 40px;
+  font-size: 15px;
+  color: var(--fg);
+}
+
+/* O'rta qism: WebView va uning ustidagi panellar */
+.stage {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.web {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+}
+.toast {
+  position: absolute;
+  left: 24px;
+  right: 24px;
+  bottom: 14px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background-color: rgba(38, 38, 45, 0.96);
+}
+.toast-text { font-size: 13px; color: var(--fg); text-align: center; }
+
+/* Pastki pleyer paneli */
+.bar {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 10px;
+  background-color: var(--surface);
+}
+.bar--empty {
+  gap: 4px;
+  padding: 14px 16px;
+}
+.hint-title { font-size: 15px; font-weight: 600; color: var(--fg); }
+.hint { font-size: 13px; line-height: 18px; color: var(--muted); }
+.progress {
+  height: 3px;
+  background-color: var(--surface2);
+}
+.progress-fill {
+  height: 3px;
+  background-color: var(--accent);
+}
+.now {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 4px 12px;
+}
+.thumb {
+  width: 64px;
+  height: 36px;
+  border-radius: 6px;
+  background-color: var(--surface2);
+}
+.meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+}
+.title { font-size: 14px; font-weight: 600; color: var(--fg); }
+.sub { font-size: 12px; color: var(--muted); }
+.controls {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 10px 0 10px;
+}
+.ctl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+}
+.ctl--big {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background-color: var(--fg);
+}
+.small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 16px;
+  background-color: var(--surface2);
+}
+.small--on { background-color: var(--accent-soft); }
+.small-text { font-size: 13px; font-weight: 600; color: var(--fg); }
+.small-text--on { color: var(--accent); }
+
+/* CSS ikonkalar (components/Icon.tsx) */
+.icon {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+}
+.icon--gap { gap: 4px; }
+.tri {
+  width: 0;
+  height: 0;
+  margin-left: 3px;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 13px solid #f2f2f5;
+}
+.tri--big {
+  margin-left: 5px;
+  border-top-width: 10px;
+  border-bottom-width: 10px;
+  border-left-width: 17px;
+  border-left-color: #0f0f12;
+}
+.tri--small {
+  margin-left: 0;
+  border-top-width: 7px;
+  border-bottom-width: 7px;
+  border-left-width: 11px;
+}
+.tri--left {
+  border-left-width: 0;
+  border-right: 11px solid #f2f2f5;
+}
+.tri--logo {
+  margin-left: 2px;
+  border-top-width: 6px;
+  border-bottom-width: 6px;
+  border-left-width: 10px;
+  border-left-color: #ffffff;
+}
+.stick {
+  width: 4px;
+  height: 15px;
+  border-radius: 1px;
+  background-color: #f2f2f5;
+}
+.stick--big {
+  width: 5px;
+  height: 19px;
+  background-color: #0f0f12;
+}
+.stick--thin {
+  width: 3px;
+  height: 14px;
+}
+
+/* Kutubxona paneli */
+.sheet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--bg);
+}
+.sheet-head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+}
+.tabs {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+.tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 17px;
+  background-color: var(--surface2);
+}
+.tab--on { background-color: var(--fg); }
+.tab-text { font-size: 14px; font-weight: 600; color: var(--muted); }
+.tab-text--on { color: var(--bg); }
+.list {
+  flex: 1;
+  width: 100%;
+}
+.row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+}
+.row--on { background-color: var(--surface); }
+.row-thumb {
+  width: 112px;
+  height: 63px;
+  border-radius: 8px;
+  background-color: var(--surface2);
+}
+.row-meta {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 4px;
+}
+.row-title { font-size: 14px; line-height: 19px; color: var(--fg); }
+.row-sub { font-size: 12px; color: var(--muted); }
+.row-x {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+.row-x-text { font-size: 22px; color: var(--muted); }
+.clear {
+  align-self: center;
+  margin: 14px 0 30px 0;
+  padding: 10px 18px;
+  border-radius: 18px;
+  background-color: var(--surface2);
+}
+.clear-text { font-size: 14px; color: var(--fg); }
+.empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+.empty-text { font-size: 15px; line-height: 22px; color: var(--muted); text-align: center; }

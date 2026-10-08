@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">YT Lynx</string>
+    <string name="channel_name">Fonda ijro</string>
+    <string name="play">Ijro</string>
+    <string name="pause">Pauza</string>
+    <string name="next">Keyingi</string>
+    <string name="prev">Oldingi</string>
+    <string name="exit">Chiqish</string>
+</resources>

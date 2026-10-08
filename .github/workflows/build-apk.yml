@@ -1,0 +1,122 @@
+name: Build APK
+
+on:
+  push:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Lynx bundle yig'ish
+        run: |
+          npm ci
+          APK_BUILD=1 npm run build
+          cp dist/main.lynx.bundle android/app/src/main/assets/main.lynx.bundle
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: APK yig'ish
+        working-directory: android
+        run: |
+          set -o pipefail
+          mkdir -p ../diag
+          gradle assembleDebug --no-daemon 2>&1 | tee ../diag/gradle.txt
+
+      - name: APK ichini tekshirish
+        run: |
+          mkdir -p diag
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          unzip -l $APK | grep -E 'assets/|\.so$' > diag/apk-contents.txt || true
+          cat diag/apk-contents.txt
+          grep -q 'assets/main.lynx.bundle' diag/apk-contents.txt || { echo "main.lynx.bundle APK ichida yo'q!"; exit 1; }
+          grep -q 'assets/yt-bridge.js' diag/apk-contents.txt || { echo "yt-bridge.js APK ichida yo'q!"; exit 1; }
+
+      - name: APK'ni artifact sifatida saqlash
+        uses: actions/upload-artifact@v4
+        with:
+          name: yt-lynx-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: KVM yoqish (emulator uchun)
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Emulatorda sinash
+        continue-on-error: true
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: default
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: bash .github/scripts/emulator-test.sh
+
+      - name: Diagnostika hisobotini tayyorlash
+        if: always()
+        run: |
+          mkdir -p diag
+          {
+            echo "Commit: ${{ github.sha }}"
+            echo
+            if grep -qE 'FAILURE|BUILD FAILED' diag/gradle.txt 2>/dev/null; then
+              echo '### Gradle xatolari'
+              echo '```'
+              grep -nE -A4 'error:|What went wrong|Duplicate class|FAILED|e: ' diag/gradle.txt | head -200 | cut -c1-400
+              echo '```'
+            fi
+            echo '### APK ichidagi .so va assets'
+            echo '```'; cat diag/apk-contents.txt 2>/dev/null; echo '```'
+            echo '### Emulator: install / start / pid'
+            echo '```'; cat diag/install.txt diag/start.txt diag/pid.txt 2>/dev/null; echo '```'
+            echo '### Emulator: media sessiya (ilova ochiq, state=3 — ijro)'
+            echo '```'; cat diag/session.txt 2>/dev/null; echo '```'
+            echo "### Fonga o'tgandan keyin: servis va ijro"
+            echo '```'; cat diag/background.txt 2>/dev/null; echo '```'
+            echo '### Logcat (ilova / Lynx / xatolar)'
+            echo '```'
+            grep -iE 'YtLynx|lynx|primjs|AndroidRuntime|FATAL|UnsatisfiedLink|com\.example\.ytlynx' diag/logcat.txt 2>/dev/null | tail -250 | cut -c1-400
+            echo '```'
+          } > diag/notes.md
+          head -c 120000 diag/notes.md > diag/notes-trimmed.md
+          wc -c diag/notes.md
+
+      - name: Latest release ga joylash (telefondan oson yuklash uchun)
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ ! -f android/app/build/outputs/apk/debug/app-debug.apk ]; then
+            # Build yiqildi: eski APK'ga tegmaymiz, xatoni alohida release'ga yozamiz
+            gh release delete build-xato --yes --cleanup-tag || true
+            gh release create build-xato --prerelease --title "Build xatosi" --notes-file diag/notes-trimmed.md
+            exit 1
+          fi
+          gh release delete build-xato --yes --cleanup-tag || true
+          cp android/app/build/outputs/apk/debug/app-debug.apk yt-lynx.apk
+          FILES="yt-lynx.apk"
+          [ -s diag/screen.png ] && cp diag/screen.png emulator-screen.png && FILES="$FILES emulator-screen.png"
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest $FILES --title "Oxirgi APK" --notes-file diag/notes-trimmed.md

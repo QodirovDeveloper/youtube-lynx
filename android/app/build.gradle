@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.example.ytlynx'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.example.ytlynx"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "0.1"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // Lynx bularni compileOnly qiladi — ilova o'zi qo'shishi shart
+    // (aks holda: NoClassDefFoundError androidx/core/util/Consumer → oq ekran)
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "androidx.recyclerview:recyclerview:1.3.2"
+    implementation "androidx.annotation:annotation:1.8.0"
+    implementation "com.google.code.gson:gson:2.10.1"
+    // Lynx (Kotlin 1.6) va appcompat (Kotlin 1.8) stdlib versiyalarini tenglashtiradi
+    // (aks holda: "Duplicate class kotlin.collections.jdk8...")
+    implementation platform("org.jetbrains.kotlin:kotlin-bom:1.8.22")
+
+    // Lynx
+    implementation "org.lynxsdk.lynx:lynx:4.1.0"
+    implementation "org.lynxsdk.lynx:lynx-jssdk:4.1.0"
+    implementation "org.lynxsdk.lynx:lynx-trace:4.1.0"
+    implementation "org.lynxsdk.lynx:primjs:4.1.1"
+
+    // Rasmlar (<image>, video muqovalari) uchun
+    implementation "org.lynxsdk.lynx:lynx-service-image:4.1.0"
+    implementation "com.facebook.fresco:fresco:2.3.0"
+    implementation "com.facebook.fresco:animated-gif:2.3.0"
+    implementation "com.facebook.fresco:animated-webp:2.3.0"
+    implementation "com.facebook.fresco:webpsupport:2.3.0"
+    implementation "com.facebook.fresco:animated-base:2.3.0"
+
+    // Log
+    implementation "org.lynxsdk.lynx:lynx-service-log:4.1.0"
+
+    // <input> (qidiruv qatori) uchun XElement
+    implementation "org.lynxsdk.lynx:xelement:4.1.0"
+    implementation "org.lynxsdk.lynx:xelement-input:4.1.0"
+
+    // WebViewCompat: JS'ni YouTube skriptlaridan OLDIN qo'yish va xavfsiz JS → Java ko'prik
+    implementation "androidx.webkit:webkit:1.11.0"
+}
